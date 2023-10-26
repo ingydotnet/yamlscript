@@ -1,0 +1,42 @@
+{
+  "name": "YAMLScript",
+  "description": "YAMLScript is a programming language",
+  "url": "https://yamlscript.org",
+  "author": {
+    "name": "Ingy döt Net",
+    "email": "ingy@yaml.com"
+  },
+  "XXX-defaultSocialImage": "/images/default-social-image.png",
+  "headerLinks": [
+    {
+      "text": "Docs",
+      "url": "/doc",
+      "external": false
+    },
+    {
+      "text": "Blog",
+      "url": "/blog",
+      "external": false
+    },
+    {
+      "text": "About",
+      "url": "/about",
+      "external": false
+    }
+  ],
+  "socialLinks": [
+  ],
+  "footerLinks": [
+    {
+      "text": "GitHub",
+      "url": "https://github.com/yaml/yamlscript",
+      "external": true
+    },
+    {
+      "text": "RSS",
+      "url": "/feed.xml",
+      "external": true
+    }
+  ],
+  "showFooterAttribution": true
+}
