@@ -34,6 +34,12 @@
      inkscape:current-layer="layer1" />
   <defs
      id="defs2" />
+  <style type="text/css">
+    @font-face {
+      font-family: Alex-Brush;
+      src: url('/font/AlexBrush-Regular.woff');
+    }
+  </style>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
@@ -55,7 +61,7 @@
            id="tspan23805">Y<tspan
    style="line-height:1.55;fill:#ff0000;stroke-width:0.35344"
    id="tspan61865">A</tspan>ML</tspan><tspan
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.0319px;line-height:1.55;font-family:'Alex Brush';-inkscape-font-specification:'Alex Brush';fill:#803300;stroke-width:0.35344"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:18.0319px;line-height:1.55;font-family:'Alex-Brush';-inkscape-font-specification:'Alex-Brush';fill:#803300;stroke-width:0.35344"
            id="tspan5018">Script</tspan></tspan></text>
   </g>
 </svg>
