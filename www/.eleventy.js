@@ -38,6 +38,7 @@ module.exports = function (eleventyConfig) {
   });
 
   eleventyConfig.setDataDeepMerge(true);
+  eleventyConfig.addPassthroughCopy({ 'src/CNAME': 'CNAME' });
   eleventyConfig.addPassthroughCopy({ 'src/images': 'images' });
   eleventyConfig.addPassthroughCopy({ 'src/font': 'font' });
   eleventyConfig.setBrowserSyncConfig({ files: [manifestPath] });
