@@ -2,7 +2,7 @@
 title: YAMLScript Advent 2023
 date: '2023-12-01'
 tags: [blog, advent-2023]
-permalink: posts/{{ title | slug }}/index.html
+permalink: '{{ page.filePathStem }}/'
 ---
 
 ### Seasons Greetings, my YAML friends!
