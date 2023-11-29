@@ -110,7 +110,7 @@ $ ys fruits.yaml
 $
 ```
 
-Nothings happens!
+Nothing happens!
 
 But why would anything happen? The program doesn't do anything!
 
