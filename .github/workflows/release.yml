@@ -1,0 +1,300 @@
+name: Release
+
+on:
+  push:
+    branches:
+    - github-actions
+#     tags:
+#       - '[0-9]+.*'
+
+env:
+  YS_RELEASE_VERBOSE: 1
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Extract release notes from Changes file
+        if [ -f Changes ]; then
+          # Get the section for this version from Changes file
+          awk '/^'"${{ steps.get_version.outputs.VERSION }}"':/ {flag=1; next} /^[0-9]+\.[0-9]+\.[0-9]+:/ {flag=0} flag' Changes > release-notes.txt
+        else
+          echo "Release ${{ steps.get_version.outputs.VERSION }}" > release-notes.txt
+        fi
+
+        # Add footer
+        cat common/release.md >> release-notes.txt || true
+
+    - name: Create Release
+      id: create_release
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const releaseNotes = fs.readFileSync('release-notes.txt', 'utf8');
+
+          const release = await github.rest.repos.createRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag_name: '${{ steps.get_version.outputs.VERSION }}',
+            name: 'YAMLScript ${{ steps.get_version.outputs.VERSION }}',
+            body: releaseNotes,
+            draft: false,
+            prerelease: false
+          });
+
+          core.setOutput('id', release.data.id);
+          core.setOutput('upload_url', release.data.upload_url);
+          console.log(`Created release with ID: ${release.data.id}`);
+
+  build-binaries:
+    name: Build ${{ matrix.platform }}
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: ubuntu-latest
+          arch: x64
+          platform: linux-x64
+          qemu: false
+        - os: ubuntu-latest
+          arch: arm64
+          platform: linux-aarch64
+          qemu: true
+        - os: macos-13
+          arch: x64
+          platform: macos-x64
+          qemu: false
+        - os: macos-14
+          arch: arm64
+          platform: macos-aarch64
+          qemu: false
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      if: matrix.qemu
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: linux/arm64
+
+    - name: Setup secrets file
+      run: |
+        mkdir -p ~/.yamlscript
+        cat > ~/.yamlscript-secrets.yaml << 'EOF'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-username: ${{ github.repository_owner }}
+        EOF
+      shell: bash
+
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Build and upload release assets
+      env:
+        YS_RELEASE_ID: ${{ needs.create-release.outputs.release_id }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Building for platform: ${{ matrix.platform }}"
+        echo "Release ID: $YS_RELEASE_ID"
+        make release-assets
+      shell: bash
+
+  build-jars:
+    name: Build JAR files
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup secrets file
+      run: |
+        mkdir -p ~/.yamlscript
+        cat > ~/.yamlscript-secrets.yaml << 'EOF'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-username: ${{ github.repository_owner }}
+        EOF
+
+    - name: Build JAR files
+      env:
+        YS_RELEASE_ID: ${{ needs.create-release.outputs.release_id }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Building JAR files"
+        # The release-assets target should handle JAR builds
+        # If JARs are built separately from binaries, adjust this
+        make release-assets
+
+  publish-bindings:
+    name: Publish Language Bindings
+    needs: [create-release, build-binaries, build-jars]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup secrets file
+      run: |
+        mkdir -p ~/.yamlscript
+        cat > ~/.yamlscript-secrets.yaml << 'EOF'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-username: ${{ github.repository_owner }}
+        clojars-username: ${{ secrets.CLOJARS_USERNAME }}
+        clojars-password: ${{ secrets.CLOJARS_PASSWORD }}
+        crates-io-token: ${{ secrets.CRATES_IO_TOKEN }}
+        npm-token: ${{ secrets.NPM_TOKEN }}
+        pypi-token: ${{ secrets.PYPI_TOKEN }}
+        rubygems-api-key: ${{ secrets.RUBYGEMS_API_KEY }}
+        nuget-api-key: ${{ secrets.NUGET_API_KEY }}
+        hackage-token: ${{ secrets.HACKAGE_TOKEN }}
+        cpan-username: ${{ secrets.CPAN_USERNAME }}
+        cpan-password: ${{ secrets.CPAN_PASSWORD }}
+        crystal-token: ${{ secrets.CRYSTAL_TOKEN }}
+        julia-token: ${{ secrets.JULIA_TOKEN }}
+        raku-token: ${{ secrets.RAKU_TOKEN }}
+        EOF
+
+    - name: Publish Clojure binding
+      run: make -C clojure release
+      continue-on-error: true
+
+    - name: Publish Crystal binding
+      run: make -C crystal release
+      continue-on-error: true
+
+    - name: Publish C# binding
+      run: make -C csharp release
+      continue-on-error: true
+
+    - name: Publish Go binding
+      run: make -C go release
+      continue-on-error: true
+
+    - name: Publish Haskell binding
+      run: make -C haskell release
+      continue-on-error: true
+
+    - name: Publish Java binding
+      run: make -C java release
+      continue-on-error: true
+
+    - name: Publish Julia binding
+      run: make -C julia release
+      continue-on-error: true
+
+    - name: Publish Lua binding
+      run: make -C lua release
+      continue-on-error: true
+
+    - name: Publish NodeJS binding
+      run: make -C nodejs release
+      continue-on-error: true
+
+    - name: Publish Perl binding
+      run: make -C perl release
+      continue-on-error: true
+
+    - name: Publish Perl-Alien binding
+      run: make -C perl-alien release
+      continue-on-error: true
+
+    - name: Publish PHP binding
+      run: make -C php release
+      continue-on-error: true
+
+    - name: Publish Python binding
+      run: make -C python release
+      continue-on-error: true
+
+    - name: Publish Raku binding
+      run: make -C raku release
+      continue-on-error: true
+
+    - name: Publish Ruby binding
+      run: make -C ruby release
+      continue-on-error: true
+
+    - name: Publish Rust binding
+      run: make -C rust release
+      continue-on-error: true
+
+  publish-website:
+    name: Publish Website
+    needs: [publish-bindings]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup secrets file
+      run: |
+        mkdir -p ~/.yamlscript
+        cat > ~/.yamlscript-secrets.yaml << 'EOF'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-username: ${{ github.repository_owner }}
+        EOF
+
+    - name: Configure git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Publish website
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Run the website publish step from your release script
+        # This may need adjustment based on your actual website publish process
+        echo "Publishing website..."
+        # TODO: Add actual website publish command
+        # Example: make publish-website or similar
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    needs: [publish-bindings]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup secrets file
+      run: |
+        mkdir -p ~/.yamlscript
+        cat > ~/.yamlscript-secrets.yaml << 'EOF'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-username: ${{ github.repository_owner }}
+        EOF
+
+    - name: Configure git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Update Homebrew
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Updating Homebrew formula..."
+        util/brew-update
