@@ -2,12 +2,7 @@ name: Test
 
 on:
   push:
-    branches:
-    - v0
-    - github-actions
   pull_request:
-    branches:
-    - v0
 
 jobs:
   test:
@@ -21,39 +16,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Run tests
-      run: make test
-      shell: bash
-
-  test-core:
-    name: Test Core
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Run core tests
-      run: make test-core
-      shell: bash
-
-  test-ys:
-    name: Test YS CLI
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Test YS CLI
-      run: make test-ys
-      shell: bash
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Run linting
-      run: make lint || true
+    - name: Run core and YS tests
+      run: make test-core test-ys
       shell: bash
