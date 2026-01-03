@@ -11,7 +11,7 @@ include $(MAKES)/shell.mk
 #------------------------------------------------------------------------------
 build:: $(LIBYS-DEPS)
 
-# jar: $(LIBYS-JAR-PATH)
+jar: $(LIBYS-JAR-PATH)
 
 install:: $(LIBYS-DEPS)
 	mkdir -p $(PREFIX)/include/
