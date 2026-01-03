@@ -2,10 +2,8 @@ name: Release
 
 on:
   push:
-    branches:
-    - github-actions
-#     tags:
-#       - '[0-9]+.*'
+    tags:
+      - '[0-9]+.*'
 
 env:
   YS_RELEASE_VERBOSE: 1
@@ -149,6 +147,7 @@ jobs:
     name: Publish Language Bindings
     needs: [create-release, build-binaries, build-jars]
     runs-on: ubuntu-latest
+    if: github.repository == 'yaml/yamlscript'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -242,6 +241,7 @@ jobs:
     name: Publish Website
     needs: [publish-bindings]
     runs-on: ubuntu-latest
+    if: github.repository == 'yaml/yamlscript'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -275,6 +275,7 @@ jobs:
     name: Update Homebrew Formula
     needs: [publish-bindings]
     runs-on: ubuntu-latest
+    if: github.repository == 'yaml/yamlscript'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
