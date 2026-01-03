@@ -71,10 +71,10 @@ jobs:
           arch: x64
           platform: linux-x64
           qemu: false
-        - os: ubuntu-latest
+        - os: ubuntu-24.04-arm64
           arch: arm64
           platform: linux-aarch64
-          qemu: true
+          qemu: false
         - os: macos-15-intel
           arch: x64
           platform: macos-x64
@@ -86,12 +86,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Set up QEMU
-      if: matrix.qemu
-      uses: docker/setup-qemu-action@v3
-      with:
-        platforms: linux/arm64
 
     - name: Build release binaries
       run: make release-build
