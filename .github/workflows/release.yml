@@ -71,10 +71,6 @@ jobs:
           arch: x64
           platform: linux-x64
           qemu: false
-        - os: ubuntu-24.04-arm64
-          arch: arm64
-          platform: linux-aarch64
-          qemu: false
         - os: macos-15-intel
           arch: x64
           platform: macos-x64
