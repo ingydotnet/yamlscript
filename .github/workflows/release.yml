@@ -93,28 +93,15 @@ jobs:
       with:
         platforms: linux/arm64
 
-    - name: Setup secrets file
-      run: |
-        mkdir -p ~/.yamlscript
-        cat > ~/.yamlscript-secrets.yaml << 'EOF'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        github-username: ${{ github.repository_owner }}
-        EOF
+    - name: Build release binaries
+      run: make release-build
       shell: bash
 
-    - name: Get version from tag
-      id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - name: Build and upload release assets
+    - name: Upload release assets
       env:
-        YS_RELEASE_ID: ${{ needs.create-release.outputs.release_id }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "Building for platform: ${{ matrix.platform }}"
-        echo "Release ID: $YS_RELEASE_ID"
-        make release-assets
+        gh release upload "${{ github.ref_name }}" *.tar.xz --clobber
       shell: bash
 
   build-jars:
@@ -125,23 +112,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup secrets file
-      run: |
-        mkdir -p ~/.yamlscript
-        cat > ~/.yamlscript-secrets.yaml << 'EOF'
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        github-username: ${{ github.repository_owner }}
-        EOF
-
     - name: Build JAR files
+      run: make jars
+
+    - name: Upload JAR assets
       env:
-        YS_RELEASE_ID: ${{ needs.create-release.outputs.release_id }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "Building JAR files"
-        # The release-assets target should handle JAR builds
-        # If JARs are built separately from binaries, adjust this
-        make release-assets
+        gh release upload "${{ github.ref_name }}" *-standalone.jar --clobber
 
   publish-bindings:
     name: Publish Language Bindings
