@@ -6,6 +6,7 @@ NATIVE-OPTS := \
   --native-image-info \
   --no-fallback \
   --initialize-at-build-time \
+  --initialize-at-run-time=clojure.lang.Compiler \
   --enable-preview \
   --enable-url-protocols=https \
   --emit=build-report \

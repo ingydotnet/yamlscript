@@ -95,14 +95,12 @@ jobs:
 
     - name: Build release binaries
       run: make release-build
-      shell: bash
 
     - name: Upload release assets
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh release upload "${{ github.ref_name }}" *.tar.xz --clobber
-      shell: bash
 
   build-jars:
     name: Build JAR files
