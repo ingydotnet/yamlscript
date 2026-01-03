@@ -5,6 +5,10 @@ on:
     tags:
     - '[0-9]+.*'
 
+defaults:
+  run:
+    shell: bash
+
 env:
   YS_RELEASE_VERBOSE: 1
 
@@ -27,11 +31,17 @@ jobs:
       id: release_notes
       run: |
         # Extract release notes from Changes file
-        if [ -f Changes ]; then
+        if [[ -f Changes ]]; then
           # Get the section for this version from Changes file
-          awk '/^'"${{ steps.get_version.outputs.VERSION }}"':/ {flag=1; next} /^[0-9]+\.[0-9]+\.[0-9]+:/ {flag=0} flag' Changes > release-notes.txt
+          awk '/^'"${{ steps.get_version.outputs.VERSION }}"':/ \
+               {flag=1; next} \
+               /^[0-9]+\.[0-9]+\.[0-9]+:/ \
+               {flag=0} flag' \
+               Changes
+            > release-notes.txt
         else
-          echo "Release ${{ steps.get_version.outputs.VERSION }}" > release-notes.txt
+          echo "Release ${{ steps.get_version.outputs.VERSION }}" \
+            > release-notes.txt
         fi
 
         # Add footer
